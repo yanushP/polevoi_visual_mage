@@ -9,9 +9,11 @@ class WhiteImage():
         self.N = len(test_image)
         self.M = len(test_image[0])
         self.HOR = int(self.N * 0.45)
-        self.parts_cnt = 1
-        self.parts_n = (self.N - self.HOR) // self.parts_cnt
-        self.parts_m = self.M // self.parts_cnt
+        self.parts_cnt = 90
+        self.size_n = (self.N - self.HOR) // self.parts_cnt
+        self.size_m = self.M // self.parts_cnt
+        self.parts_n = (self.N - self.HOR) // self.size_n + 1
+        self.parts_m = self.M // self.size_m
         self._process_image()
 
     def _create_windows(self, name, pos):
@@ -23,31 +25,33 @@ class WhiteImage():
         self.hsv_test_img = cv.cvtColor(self.test_image, cv.COLOR_BGR2HSV)
         self.white_spots = np.zeros((self.N, self.M))
 
-        for i in range(0, self.parts_cnt):
-            for j in range(0, self.parts_cnt):
-                l_i = self.HOR + i * self.parts_n
-                r_i = min(self.HOR + (i + 1) * self.parts_n, self.N)
-                l_j = (j * self.parts_m)
-                r_j = min((j + 1) * self.parts_m, self.M)
+        for i in range(0, self.parts_n):
+            for j in range(0,  self.parts_m):
+                l_i = self.HOR + i * self.size_n
+                r_i = min(self.HOR + (i + 1) * self.size_n, self.N)
+                l_j = j * self.size_m
+                r_j = min((j + 1) * self.size_m, self.M)
 
                 sum_s = all_pt = 0
                 for x in range(l_i, r_i):
                     for y in range(l_j, r_j):
                         all_pt += 1
                         sum_s += self.hsv_test_img[x][y][1]
-                mid_vl = max(40, (sum_s / all_pt) - 13)
+                mid_vl = max(40, (sum_s / all_pt) - 3)
 
                 for x in range(l_i, r_i):
                     for y in range(l_j, r_j):
-                        if self.hsv_test_img[x][y][1] <= mid_vl
-                        and self.hsv_test_img[x][y][2] > 90:
+                        if (
+                            self.hsv_test_img[x][y][1] <= mid_vl and
+                            self.hsv_test_img[x][y][2] > 30
+                        ):
                             self.white_spots[x][y] = 1
                         else:
                             self.white_spots[x][y] = 0
 
         # clear image
         self.erode_img = cv.erode(self.white_spots, np.ones((5, 5)))
-        self.dilate_img = cv.dilate(self.erode_img, np.ones((15, 15)))
+        self.dilate_img = cv.dilate(self.erode_img, np.ones((21, 21)))
         self.result_image = cv.erode(self.dilate_img, np.ones((3, 3)))
 
     def get_result(self, vali_img, need_print=False):
@@ -58,8 +62,10 @@ class WhiteImage():
             for j in range(0, self.M):
                 ans = True if self.result_image[i][j] == 1 else False
                 real = False
-                if int(vali_img[i][j][1]) - int(vali_img[i][j][0]) >= 90
-                and vali_img[i][j][1] > 160:
+                if (
+                    vali_img[i][j][1] - vali_img[i][j][0] >= 90 and
+                    vali_img[i][j][1] > 160
+                ):
                     vali_img[i][j] = [255, 255, 255]
                     real = True
                     pos_all += 1
@@ -91,9 +97,9 @@ class WhiteImage():
         return (100 * true_pos / pos_all, 100 * false_neg / neg_all)
 
     def show_res_images(self):
-        self._create_windows("default_image", (0, 0))
-        self._create_windows("validation_image", (100, 100))
-        self._create_windows("final_image", (300, 300))
+        self._create_windows("default_image", (2300, 0))
+        self._create_windows("validation_image", (1900, 100))
+        self._create_windows("final_image", (1700, 300))
         cv.imshow("default_image", self.test_image)
 
         for i in range(self.HOR - 10, self.HOR):
@@ -103,7 +109,7 @@ class WhiteImage():
         for i in range(self.HOR, self.N):
             for j in range(0, self.M):
                 if self.result_image[i][j] == 1:
-                    self.test_image[i][j] = [255, 255, 255]
+                    self.test_image[i][j] = [0, 0, 0]
 
         cv.imshow("validation_image", self.vali_img)
         cv.imshow("final_image", self.test_image)
@@ -117,10 +123,10 @@ def main():
     TEST_IMG = "SYNTHIA-SEQS-01-SUMMER/RGB/Stereo_Right/Omni_F/000{}.png"
     IMG_CNT = 944
 
-    for i in range(0, IMG_CNT):
+    for i in range(213, IMG_CNT):
         img_num = '0' * (3 - len(str(i))) + str(i)
         print (TEST_IMG.format(img_num))
-        vali_img = cv.imread(VALIDATE_IMG.format(img_num))
+        vali_img = cv.imread(VAL_IMG.format(img_num))
         test_img = cv.imread(TEST_IMG.format(img_num))
         mat = WhiteImage(test_img)
         mat.get_result(vali_img, True)
