@@ -39,7 +39,8 @@ class WhiteImage():
 
                 for x in range(l_i, r_i):
                     for y in range(l_j, r_j):
-                        if (self.hsv_test_img[x][y][1] <= mid_vl and self.hsv_test_img[x][y][2] > 90):
+                        if self.hsv_test_img[x][y][1] <= mid_vl
+                        and self.hsv_test_img[x][y][2] > 90:
                             self.white_spots[x][y] = 1
                         else:
                             self.white_spots[x][y] = 0
@@ -57,7 +58,8 @@ class WhiteImage():
             for j in range(0, self.M):
                 ans = True if self.result_image[i][j] == 1 else False
                 real = False
-                if int(vali_img[i][j][1]) - int(vali_img[i][j][0]) >= 90 and vali_img[i][j][1] > 160:
+                if int(vali_img[i][j][1]) - int(vali_img[i][j][0]) >= 90
+                and vali_img[i][j][1] > 160:
                     vali_img[i][j] = [255, 255, 255]
                     real = True
                     pos_all += 1
@@ -72,8 +74,20 @@ class WhiteImage():
         false_pos = pos_all - true_pos
         true_neg = neg_all - false_neg
         if need_print:
-            print ("Positive {0} TruePositive {1} : {2}\% FalsePositive {3}: {4}%".format(pos_all, true_pos, 100 * true_pos / pos_all, false_pos, 100 * false_pos / pos_all))
-            print ("Negative {0} TrueNegative {1} : {2}\% FalseNegative {3}: {4}%".format(neg_all, true_neg, 100 * true_neg / neg_all, false_neg, 100 * false_neg / neg_all))
+            print ("Pos {0} TP {1} : {2}% FP {3}: {4}%".format(
+                pos_all,
+                true_pos,
+                100 * true_pos / pos_all,
+                false_pos,
+                100 * false_pos / pos_all
+            ))
+            print ("Neg {0} TN {1} : {2}% FNe {3}: {4}%".format(
+                neg_all,
+                true_neg,
+                100 * true_neg / neg_all,
+                false_neg,
+                100 * false_neg / neg_all
+            ))
         return (100 * true_pos / pos_all, 100 * false_neg / neg_all)
 
     def show_res_images(self):
@@ -88,7 +102,8 @@ class WhiteImage():
 
         for i in range(self.HOR, self.N):
             for j in range(0, self.M):
-                self.test_image[i][j] = [255, 255, 255] if self.result_image[i][j] == 1 else self.test_image[i][j]
+                if self.result_image[i][j] == 1:
+                    self.test_image[i][j] = [255, 255, 255]
 
         cv.imshow("validation_image", self.vali_img)
         cv.imshow("final_image", self.test_image)
@@ -98,7 +113,7 @@ class WhiteImage():
 
 
 def main():
-    VALIDATE_IMG = "SYNTHIA-SEQS-01-SUMMER/GT/COLOR/Stereo_Right/Omni_F/000{}.png"
+    VAL_IMG = "SYNTHIA-SEQS-01-SUMMER/GT/COLOR/Stereo_Right/Omni_F/000{}.png"
     TEST_IMG = "SYNTHIA-SEQS-01-SUMMER/RGB/Stereo_Right/Omni_F/000{}.png"
     IMG_CNT = 944
 
@@ -109,7 +124,7 @@ def main():
         test_img = cv.imread(TEST_IMG.format(img_num))
         mat = WhiteImage(test_img)
         mat.get_result(vali_img, True)
-        #mat.show_res_images()
+        # mat.show_res_images()
 
 if __name__ == "__main__":
     main()
